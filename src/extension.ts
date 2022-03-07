@@ -47,7 +47,7 @@ class TimeTrackerPanel {
       TimeTrackerPanel.viewType,
       "Time Tracker",
       column || vscode.ViewColumn.One,
-      getWebviewOptions(extensionUri)
+      { ...getWebviewOptions(extensionUri), retainContextWhenHidden: true }
     );
 
     TimeTrackerPanel.currentPanel = new TimeTrackerPanel(panel, extensionUri);
@@ -65,6 +65,13 @@ class TimeTrackerPanel {
 
     this._panel.title = "Clocked In";
     this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
+
+    this._panel.webview.onDidReceiveMessage(async (data) => {
+      switch (data.command) {
+        case "alert":
+          vscode.window.showInformationMessage(data.text);
+      }
+    });
 
     // Listen for when the panel is disposed
     // This happens when the user closes the panel or when the panel is closed programmatically
@@ -144,7 +151,10 @@ class TimeTrackerPanel {
     // Local path to main script run in the webview
     // And the uri we use to load this script in the webview
     const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, "out/compiled", "HelloWord.js")
+      vscode.Uri.joinPath(this._extensionUri, "out/compiled", "Pomodoro.js")
+    );
+    const stylesUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, "out/compiled", "Pomodoro.css")
     );
 
     // // Local path to css styles
@@ -176,7 +186,7 @@ class TimeTrackerPanel {
       -->
       <meta http-equiv="Content-Security-Policy" content="img-src https: data:; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}';">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     
+      <link href="${stylesUri}" rel="stylesheet">
       <script nonce="${nonce}">
       const vscode = acquireVsCodeApi();
       </script>
